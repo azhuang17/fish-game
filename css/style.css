@@ -121,7 +121,7 @@ body {
 #gameCanvas {
     display: block;
     background: linear-gradient(180deg, #001a2e 0%, #003d5c 50%, #005577 100%);
-    cursor: none;
+    cursor: crosshair; /* 确保鼠标指针可见 */
 }
 
 /* 游戏UI */

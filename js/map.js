@@ -200,8 +200,14 @@ class MapSystem {
     generateMapContent(game) {
         const currentMap = this.getCurrentMap();
         
-        // 生成鱼群
-        for (let i = 0; i < currentMap.fishCount; i++) {
+        // 生成鱼群，确保有足够的小鱼供玩家吃掉
+        const totalFish = currentMap.fishCount;
+        const smallFishCount = Math.floor(totalFish * 0.6); // 60%的小鱼
+        const normalFishCount = Math.floor(totalFish * 0.3); // 30%的普通鱼
+        const bigFishCount = totalFish - smallFishCount - normalFishCount; // 剩余的大鱼
+        
+        // 生成小鱼（比玩家小）
+        for (let i = 0; i < smallFishCount; i++) {
             let x, y;
             let attempts = 0;
             
@@ -211,7 +217,41 @@ class MapSystem {
                 attempts++;
             } while (distance(x, y, game.player.x, game.player.y) < 300 && attempts < 50);
             
-            const size = random(8, 35);
+            // 确保生成的鱼比玩家小
+            const size = random(6, Math.max(8, game.player.size * 0.7));
+            const fish = new Fish(x, y, size, 'small', false);
+            game.fishes.push(fish);
+        }
+        
+        // 生成普通大小的鱼
+        for (let i = 0; i < normalFishCount; i++) {
+            let x, y;
+            let attempts = 0;
+            
+            do {
+                x = random(50, currentMap.size - 50);
+                y = random(50, currentMap.size - 50);
+                attempts++;
+            } while (distance(x, y, game.player.x, game.player.y) < 300 && attempts < 50);
+            
+            const size = random(game.player.size * 0.8, game.player.size * 1.2);
+            const type = currentMap.fishTypes[randomInt(0, currentMap.fishTypes.length - 1)];
+            const fish = new Fish(x, y, size, type, false);
+            game.fishes.push(fish);
+        }
+        
+        // 生成大鱼（威胁）
+        for (let i = 0; i < bigFishCount; i++) {
+            let x, y;
+            let attempts = 0;
+            
+            do {
+                x = random(50, currentMap.size - 50);
+                y = random(50, currentMap.size - 50);
+                attempts++;
+            } while (distance(x, y, game.player.x, game.player.y) < 400 && attempts < 50);
+            
+            const size = random(game.player.size * 1.3, 35);
             const type = currentMap.fishTypes[randomInt(0, currentMap.fishTypes.length - 1)];
             const fish = new Fish(x, y, size, type, false);
             game.fishes.push(fish);
