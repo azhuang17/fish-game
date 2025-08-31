@@ -32,6 +32,12 @@ class Fish {
         this.teleportBoostDuration = 3; // 3秒加速时间
         this.teleportBoostMultiplier = 1.5; // 1.5倍速度
         
+        // 吃鱼后加速状态
+        this.isEatBoosted = false;
+        this.eatBoostTime = 0;
+        this.eatBoostDuration = 2; // 2秒加速时间
+        this.eatBoostMultiplier = 1.3; // 1.3倍速度
+        
         // AI相关（非玩家鱼）
         if (!isPlayer) {
             this.aiTarget = null;
@@ -54,11 +60,16 @@ class Fish {
             'fast': 140,
             'big': 80
         };
-        const baseSpeed = speeds[this.type] || 100;
+        let baseSpeed = speeds[this.type] || 100;
         
-        // 如果处于传送加速状态，返回加速后的速度
+        // 如果处于传送加速状态，应用传送加速
         if (this.isTeleportBoosted) {
-            return baseSpeed * this.teleportBoostMultiplier;
+            baseSpeed *= this.teleportBoostMultiplier;
+        }
+        
+        // 如果处于吃鱼加速状态，应用吃鱼加速
+        if (this.isEatBoosted) {
+            baseSpeed *= this.eatBoostMultiplier;
         }
         
         return baseSpeed;
@@ -107,6 +118,14 @@ class Fish {
             this.teleportBoostTime -= deltaTime;
             if (this.teleportBoostTime <= 0) {
                 this.isTeleportBoosted = false;
+            }
+        }
+
+        // 处理吃鱼后加速状态
+        if (this.isEatBoosted) {
+            this.eatBoostTime -= deltaTime;
+            if (this.eatBoostTime <= 0) {
+                this.isEatBoosted = false;
             }
         }
 
@@ -263,6 +282,9 @@ class Fish {
         // 增加成长点数
         this.growthPoints += otherFish.size;
         
+        // 激活吃鱼加速效果
+        this.activateEatBoost();
+        
         // 检查是否可以成长
         if (this.growthPoints >= this.size * 2) {
             this.grow();
@@ -355,6 +377,11 @@ class Fish {
             // 绘制传送加速效果
             if (this.isTeleportBoosted) {
                 this.drawTeleportBoostEffect(ctx, screenPos);
+            }
+            
+            // 绘制吃鱼加速效果
+            if (this.isEatBoosted) {
+                this.drawEatBoostEffect(ctx, screenPos);
             }
         }
     }
@@ -541,6 +568,50 @@ class Fish {
         ctx.restore();
     }
 
+    drawEatBoostEffect(ctx, screenPos) {
+        ctx.save();
+        
+        // 计算加速效果的透明度（随时间衰减）
+        const alpha = this.eatBoostTime / this.eatBoostDuration;
+        
+        // 绘制橙色加速光环
+        ctx.strokeStyle = `rgba(255, 165, 0, ${alpha * 0.8})`;
+        ctx.lineWidth = 3;
+        ctx.setLineDash([4, 4]);
+        ctx.lineDashOffset = this.animationTime * 120; // 旋转效果
+        
+        ctx.beginPath();
+        ctx.arc(screenPos.x, screenPos.y, this.radius + 25, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // 绘制内层光环
+        ctx.strokeStyle = `rgba(255, 140, 0, ${alpha * 0.6})`;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([2, 2]);
+        ctx.lineDashOffset = -this.animationTime * 100;
+        
+        ctx.beginPath();
+        ctx.arc(screenPos.x, screenPos.y, this.radius + 18, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // 绘制速度火花效果
+        if (this.vx !== 0 || this.vy !== 0) {
+            for (let i = 0; i < 3; i++) {
+                const sparkAngle = this.direction + Math.PI + (i - 1) * 0.3;
+                const sparkDistance = 25 + i * 5;
+                const sparkX = screenPos.x + Math.cos(sparkAngle) * sparkDistance;
+                const sparkY = screenPos.y + Math.sin(sparkAngle) * sparkDistance;
+                
+                ctx.fillStyle = `rgba(255, 165, 0, ${alpha * 0.8})`;
+                ctx.beginPath();
+                ctx.arc(sparkX, sparkY, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        ctx.restore();
+    }
+
     darkenColor(color) {
         // 简单的颜色变暗函数
         const hex = color.replace('#', '');
@@ -564,6 +635,13 @@ class Fish {
         this.isTeleportBoosted = true;
         this.teleportBoostTime = this.teleportBoostDuration;
         console.log('传送加速激活！');
+    }
+
+    // 激活吃鱼后加速效果
+    activateEatBoost() {
+        this.isEatBoosted = true;
+        this.eatBoostTime = this.eatBoostDuration;
+        console.log('吃鱼加速激活！');
     }
 
     // 获取鱼的信息
