@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小鱼吃大鱼</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 初始页面 -->
+    <div id="startScreen" class="screen">
+        <div class="title-container">
+            <h1 class="game-title">小鱼吃大鱼</h1>
+            <p class="game-subtitle">在水下世界中成长，避开危险，成为最大的鱼！</p>
+        </div>
+        <button id="startButton" class="start-button">开始游戏</button>
+        <div class="instructions">
+            <h3>游戏说明：</h3>
+            <ul>
+                <li>使用方向键或WASD控制小鱼移动</li>
+                <li>吃掉比自己小的鱼来成长</li>
+                <li>避开比自己大的鱼和炸弹</li>
+                <li>按空格键使用眩晕技能</li>
+                <li>通过传送门探索不同地图</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 游戏画面 -->
+    <div id="gameScreen" class="screen hidden">
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- 游戏UI -->
+        <div id="gameUI">
+            <div class="ui-top">
+                <div class="size-indicator">
+                    <span>体型: </span>
+                    <div class="size-bar">
+                        <div id="sizeProgress" class="size-progress"></div>
+                    </div>
+                </div>
+                <div class="skill-indicator">
+                    <span>技能: </span>
+                    <div id="skillCooldown" class="skill-cooldown">
+                        <div id="skillProgress" class="skill-progress"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="ui-bottom">
+                <div class="map-indicator">
+                    <span id="currentMap">地图 1</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏结束页面 -->
+    <div id="endScreen" class="screen hidden">
+        <div class="end-container">
+            <h2 id="endTitle">游戏结束</h2>
+            <p id="endMessage">恭喜你成为了海洋之王！</p>
+            <button id="restartButton" class="restart-button">重新开始</button>
+        </div>
+    </div>
+
+    <!-- 加载脚本 -->
+    <script src="js/utils.js"></script>
+    <script src="js/fish.js"></script>
+    <script src="js/skill.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
+
