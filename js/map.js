@@ -136,6 +136,10 @@ class MapSystem {
         const targetMapIndex = this.maps.findIndex(map => map.id === mapId);
         if (targetMapIndex === -1) return false;
 
+        // 保存玩家当前的移动速度
+        const currentVx = game.player.vx;
+        const currentVy = game.player.vy;
+
         // 切换地图
         this.currentMapIndex = targetMapIndex;
         const newMap = this.getCurrentMap();
@@ -147,6 +151,13 @@ class MapSystem {
         // 移动玩家到新位置
         game.player.x = x;
         game.player.y = y;
+
+        // 恢复玩家的移动速度（保持传送前的速度）
+        game.player.vx = currentVx;
+        game.player.vy = currentVy;
+
+        // 激活传送后加速效果
+        game.player.activateTeleportBoost();
 
         // 变换玩家鱼的外观
         this.transformPlayerFish(game.player, mapId);

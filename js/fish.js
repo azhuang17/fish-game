@@ -26,6 +26,12 @@ class Fish {
         this.stunTime = 0;
         this.isAlive = true;
         
+        // 传送后加速状态
+        this.isTeleportBoosted = false;
+        this.teleportBoostTime = 0;
+        this.teleportBoostDuration = 3; // 3秒加速时间
+        this.teleportBoostMultiplier = 1.5; // 1.5倍速度
+        
         // AI相关（非玩家鱼）
         if (!isPlayer) {
             this.aiTarget = null;
@@ -48,7 +54,14 @@ class Fish {
             'fast': 140,
             'big': 80
         };
-        return speeds[this.type] || 100;
+        const baseSpeed = speeds[this.type] || 100;
+        
+        // 如果处于传送加速状态，返回加速后的速度
+        if (this.isTeleportBoosted) {
+            return baseSpeed * this.teleportBoostMultiplier;
+        }
+        
+        return baseSpeed;
     }
 
     getColorByType() {
@@ -89,12 +102,23 @@ class Fish {
             return; // 眩晕时不能移动
         }
 
+        // 处理传送后加速状态
+        if (this.isTeleportBoosted) {
+            this.teleportBoostTime -= deltaTime;
+            if (this.teleportBoostTime <= 0) {
+                this.isTeleportBoosted = false;
+            }
+        }
+
         // 玩家控制 vs AI控制
         if (this.isPlayer) {
             this.updatePlayerMovement(deltaTime);
         } else {
             this.updateAI(deltaTime, allFish);
         }
+
+        // 更新当前速度（考虑传送加速）
+        this.speed = this.getSpeedByType();
 
         // 更新位置
         this.x += this.vx * deltaTime;
@@ -327,6 +351,11 @@ class Fish {
         // 绘制玩家指示器
         if (this.isPlayer) {
             this.drawPlayerIndicator(ctx, screenPos);
+            
+            // 绘制传送加速效果
+            if (this.isTeleportBoosted) {
+                this.drawTeleportBoostEffect(ctx, screenPos);
+            }
         }
     }
 
@@ -463,6 +492,55 @@ class Fish {
         ctx.restore();
     }
 
+    drawTeleportBoostEffect(ctx, screenPos) {
+        ctx.save();
+        
+        // 计算加速效果的透明度（随时间衰减）
+        const alpha = this.teleportBoostTime / this.teleportBoostDuration;
+        
+        // 绘制加速光环
+        ctx.strokeStyle = `rgba(153, 102, 255, ${alpha * 0.8})`;
+        ctx.lineWidth = 4;
+        ctx.setLineDash([3, 3]);
+        ctx.lineDashOffset = this.animationTime * 100; // 旋转效果
+        
+        ctx.beginPath();
+        ctx.arc(screenPos.x, screenPos.y, this.radius + 20, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // 绘制内层光环
+        ctx.strokeStyle = `rgba(204, 153, 255, ${alpha * 0.6})`;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([2, 2]);
+        ctx.lineDashOffset = -this.animationTime * 80;
+        
+        ctx.beginPath();
+        ctx.arc(screenPos.x, screenPos.y, this.radius + 15, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // 绘制速度拖尾效果
+        if (this.vx !== 0 || this.vy !== 0) {
+            const trailLength = 30;
+            const trailX = screenPos.x - Math.cos(this.direction) * trailLength;
+            const trailY = screenPos.y - Math.sin(this.direction) * trailLength;
+            
+            const gradient = ctx.createLinearGradient(screenPos.x, screenPos.y, trailX, trailY);
+            gradient.addColorStop(0, `rgba(153, 102, 255, ${alpha * 0.8})`);
+            gradient.addColorStop(1, 'rgba(153, 102, 255, 0)');
+            
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 6;
+            ctx.setLineDash([]);
+            
+            ctx.beginPath();
+            ctx.moveTo(screenPos.x, screenPos.y);
+            ctx.lineTo(trailX, trailY);
+            ctx.stroke();
+        }
+        
+        ctx.restore();
+    }
+
     darkenColor(color) {
         // 简单的颜色变暗函数
         const hex = color.replace('#', '');
@@ -479,6 +557,13 @@ class Fish {
         const g = Math.min(255, parseInt(hex.substr(2, 2), 16) + 40);
         const b = Math.min(255, parseInt(hex.substr(4, 2), 16) + 40);
         return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    // 激活传送后加速效果
+    activateTeleportBoost() {
+        this.isTeleportBoosted = true;
+        this.teleportBoostTime = this.teleportBoostDuration;
+        console.log('传送加速激活！');
     }
 
     // 获取鱼的信息
