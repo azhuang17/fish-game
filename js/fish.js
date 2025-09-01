@@ -55,16 +55,16 @@ class Fish {
 
     getSpeedByType() {
         const speeds = {
-            'small': 120,
-            'normal': 100,
-            'fast': 140,
-            'big': 80
+            'small': 180,    // 从120提高到180
+            'normal': 150,   // 从100提高到150
+            'fast': 210,     // 从140提高到210
+            'big': 120       // 从80提高到120
         };
-        let baseSpeed = speeds[this.type] || 100;
+        let baseSpeed = speeds[this.type] || 150;
         
         // 玩家鱼使用与AI鱼相同的基础速度
         if (this.isPlayer) {
-            baseSpeed = 100; // 与normal类型AI鱼相同的速度
+            baseSpeed = 150; // 与normal类型AI鱼相同的速度，从100提高到150
         }
         
         // 如果处于传送加速状态，应用传送加速
