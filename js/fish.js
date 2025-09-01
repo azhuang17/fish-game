@@ -62,6 +62,11 @@ class Fish {
         };
         let baseSpeed = speeds[this.type] || 100;
         
+        // 玩家鱼使用与AI鱼相同的基础速度
+        if (this.isPlayer) {
+            baseSpeed = 100; // 与normal类型AI鱼相同的速度
+        }
+        
         // 如果处于传送加速状态，应用传送加速
         if (this.isTeleportBoosted) {
             baseSpeed *= this.teleportBoostMultiplier;
