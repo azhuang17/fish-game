@@ -9,6 +9,7 @@ class Game {
         
         // 游戏状态
         this.gameState = 'start'; // 'start', 'playing', 'end'
+        this.isTeleporting = false; // 添加传送状态管理
         
         // 游戏对象
         this.player = null;
@@ -42,8 +43,12 @@ class Game {
         this.mapSize = 2000;
         
         // 技能系统
-        this.skillCooldown = 0;
-        this.maxSkillCooldown = 5; // 5秒冷却
+        this.skillCooldowns = {
+            stun: 0,
+            speed: 0,
+            wall: 0
+        };
+        this.currentSkill = 'stun'; // 当前选中的技能
         
         // UI元素
         this.sizeProgress = 0;
@@ -98,6 +103,20 @@ class Game {
             this.keys[e.code] = false;
         });
 
+        // 技能切换
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Digit1') {
+                this.currentSkill = 'stun';
+                this.updateSkillUI();
+            } else if (e.code === 'Digit2') {
+                this.currentSkill = 'speed';
+                this.updateSkillUI();
+            } else if (e.code === 'Digit3') {
+                this.currentSkill = 'wall';
+                this.updateSkillUI();
+            }
+        });
+
         // 鼠标事件
         this.canvas.addEventListener('mousemove', (e) => {
             const rect = this.canvas.getBoundingClientRect();
@@ -133,6 +152,26 @@ class Game {
         document.getElementById('restartButton').addEventListener('click', () => {
             this.restartGame();
         });
+
+        // 移动端技能按钮
+        const skillButton = document.getElementById('skillButton');
+        if (skillButton) {
+            // 点击事件
+            skillButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.gameState === 'playing') {
+                    this.useSkill();
+                }
+            });
+
+            // 触摸事件（防止双重触发）
+            skillButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (this.gameState === 'playing') {
+                    this.useSkill();
+                }
+            });
+        }
     }
 
     startGame() {
@@ -175,7 +214,8 @@ class Game {
         
         // 重置游戏状态
         this.gameTime = 0;
-        this.skillCooldown = 0;
+        this.skillCooldowns = { stun: 0, speed: 0, wall: 0 };
+        this.skillSystem.clearWalls(); // 清理所有石墙
         this.updateSizeUI();
         this.updateSkillUI();
         this.updateMapUI();
@@ -247,7 +287,13 @@ class Game {
         // 更新所有鱼
         this.fishes.forEach(fish => {
             fish.update(deltaTime, this.fishes, this.camera, this.canvas);
+            
+            // 检查鱼与石墙的碰撞
+            this.skillSystem.checkWallCollision(fish);
         });
+        
+        // 更新石墙
+        this.skillSystem.updateWalls(deltaTime);
         
         // 更新炸弹动画
         this.bombs.forEach(bomb => {
@@ -413,7 +459,7 @@ class Game {
     }
 
     checkPortalCollisions() {
-        if (!this.player || !this.player.isAlive) return;
+        if (!this.player || !this.player.isAlive || this.isTeleporting) return;
         
         const portal = this.mapSystem.checkPortalCollision(this.player);
         if (portal) {
@@ -423,25 +469,45 @@ class Game {
     }
 
     useSkill() {
-        if (this.skillCooldown > 0 || !this.player || !this.player.isAlive) return;
+        if (this.skillCooldowns[this.currentSkill] > 0 || !this.player || !this.player.isAlive) return;
         
-        // 释放眩晕技能
-        this.skillCooldown = this.maxSkillCooldown;
+        const skill = this.skillSystem.getSkill(this.currentSkill);
+        if (!skill) return;
         
-        // 使用技能系统创建特效
-        this.skillSystem.createStunEffect(this.player.x, this.player.y, this.particleSystem);
+        // 设置技能冷却
+        this.skillCooldowns[this.currentSkill] = skill.cooldown;
         
-        // 眩晕周围的鱼
-        const affectedCount = this.skillSystem.applyStunToFishes(this.player.x, this.player.y, this.fishes);
+        // 根据技能类型执行不同逻辑
+        switch (this.currentSkill) {
+            case 'stun':
+                this.skillSystem.createStunEffect(this.player.x, this.player.y, this.particleSystem);
+                const affectedCount = this.skillSystem.applyStunToFishes(this.player.x, this.player.y, this.fishes);
+                console.log(`使用眩晕技能，影响了 ${affectedCount} 条鱼`);
+                break;
+                
+            case 'speed':
+                this.skillSystem.createSpeedEffect(this.player, this.particleSystem);
+                console.log('使用加速技能');
+                break;
+                
+            case 'wall':
+                this.skillSystem.createWall(this.player.x, this.player.y, this.player.direction);
+                console.log('使用石墙技能');
+                break;
+        }
         
         this.updateSkillUI();
-        console.log(`使用眩晕技能，影响了 ${affectedCount} 条鱼`);
     }
 
     updateSkillCooldown(deltaTime) {
-        if (this.skillCooldown > 0) {
-            this.skillCooldown -= deltaTime;
-            if (this.skillCooldown < 0) this.skillCooldown = 0;
+        // 更新所有技能冷却
+        for (const skillName in this.skillCooldowns) {
+            if (this.skillCooldowns[skillName] > 0) {
+                this.skillCooldowns[skillName] -= deltaTime;
+                if (this.skillCooldowns[skillName] < 0) {
+                    this.skillCooldowns[skillName] = 0;
+                }
+            }
         }
         this.updateSkillUI();
     }
@@ -526,10 +592,52 @@ class Game {
     }
 
     updateSkillUI() {
-        const progress = Math.max(0, (this.maxSkillCooldown - this.skillCooldown) / this.maxSkillCooldown) * 100;
+        // 更新当前技能的冷却进度
+        const skill = this.skillSystem.getSkill(this.currentSkill);
+        if (!skill) return;
+        
+        const cooldownTime = this.skillCooldowns[this.currentSkill];
+        const progress = Math.max(0, (skill.cooldown - cooldownTime) / skill.cooldown) * 100;
+        
         const progressElement = document.getElementById('skillProgress');
         if (progressElement) {
             progressElement.style.width = progress + '%';
+        }
+
+        // 更新技能名称显示
+        const skillNameElement = document.getElementById('skillName');
+        if (skillNameElement) {
+            skillNameElement.textContent = `${this.currentSkill.toUpperCase()}: ${skill.name}`;
+        }
+
+        // 更新技能描述
+        const skillDescElement = document.getElementById('skillDescription');
+        if (skillDescElement) {
+            skillDescElement.textContent = skill.description;
+        }
+
+        // 更新移动端技能按钮状态
+        const skillButton = document.getElementById('skillButton');
+        if (skillButton) {
+            if (cooldownTime > 0) {
+                skillButton.classList.add('cooldown', 'disabled');
+                skillButton.disabled = true;
+                skillButton.textContent = `${skill.name} (${cooldownTime.toFixed(1)}s)`;
+            } else {
+                skillButton.classList.remove('cooldown', 'disabled');
+                skillButton.disabled = false;
+                skillButton.textContent = skill.name;
+            }
+        }
+
+        // 更新技能快捷键提示
+        const skillKeysElement = document.getElementById('skillKeys');
+        if (skillKeysElement) {
+            skillKeysElement.innerHTML = `
+                <div class="skill-key ${this.currentSkill === 'stun' ? 'active' : ''}">1: 眩晕</div>
+                <div class="skill-key ${this.currentSkill === 'speed' ? 'active' : ''}">2: 加速</div>
+                <div class="skill-key ${this.currentSkill === 'wall' ? 'active' : ''}">3: 石墙</div>
+            `;
         }
     }
 
@@ -561,6 +669,9 @@ class Game {
                 this.drawBomb(bomb);
             }
         });
+        
+        // 绘制石墙
+        this.skillSystem.renderWalls(this.ctx, this.camera);
         
         // 绘制粒子效果
         this.particleSystem.draw(this.ctx, this.camera);

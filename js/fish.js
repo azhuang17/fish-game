@@ -38,6 +38,12 @@ class Fish {
         this.eatBoostDuration = 2; // 2秒加速时间
         this.eatBoostMultiplier = 1.3; // 1.3倍速度
         
+        // 技能加速状态
+        this.isSpeedBoosted = false;
+        this.speedBoostTime = 0;
+        this.speedBoostDuration = 5; // 5秒加速时间
+        this.speedBoostMultiplier = 2.0; // 2.0倍速度
+        
         // AI相关（非玩家鱼）
         if (!isPlayer) {
             this.aiTarget = null;
@@ -62,9 +68,9 @@ class Fish {
         };
         let baseSpeed = speeds[this.type] || 150;
         
-        // 玩家鱼使用与AI鱼相同的基础速度
+        // 玩家鱼使用更高的基础速度
         if (this.isPlayer) {
-            baseSpeed = 150; // 与normal类型AI鱼相同的速度，从100提高到150
+            baseSpeed = 315; // 玩家鱼速度再次提高50%（210→315）
         }
         
         // 如果处于传送加速状态，应用传送加速
@@ -75,6 +81,11 @@ class Fish {
         // 如果处于吃鱼加速状态，应用吃鱼加速
         if (this.isEatBoosted) {
             baseSpeed *= this.eatBoostMultiplier;
+        }
+        
+        // 如果处于技能加速状态，应用技能加速
+        if (this.isSpeedBoosted) {
+            baseSpeed *= this.speedBoostMultiplier;
         }
         
         return baseSpeed;
@@ -107,16 +118,23 @@ class Fish {
     update(deltaTime, allFish, camera, canvas) {
         if (!this.isAlive) return;
 
-        this.animationTime += deltaTime;
-        
         // 处理眩晕状态
         if (this.isStunned) {
             this.stunTime -= deltaTime;
             if (this.stunTime <= 0) {
                 this.isStunned = false;
+                // 眩晕结束后继续更新动画时间
+                this.animationTime += deltaTime;
+            } else {
+                // 眩晕时强制清零速度，且不更新动画时间
+                this.vx = 0;
+                this.vy = 0;
             }
             return; // 眩晕时不能移动
         }
+        
+        // 非眩晕状态才更新动画时间
+        this.animationTime += deltaTime;
 
         // 处理传送后加速状态
         if (this.isTeleportBoosted) {
@@ -131,6 +149,14 @@ class Fish {
             this.eatBoostTime -= deltaTime;
             if (this.eatBoostTime <= 0) {
                 this.isEatBoosted = false;
+            }
+        }
+
+        // 处理技能加速状态
+        if (this.isSpeedBoosted) {
+            this.speedBoostTime -= deltaTime;
+            if (this.speedBoostTime <= 0) {
+                this.isSpeedBoosted = false;
             }
         }
 
@@ -262,8 +288,8 @@ class Fish {
     }
 
     checkMapBounds() {
-        // 这里暂时设置一个大的边界，后续会根据地图系统调整
-        const mapSize = 2000;
+        // 从游戏实例获取当前地图大小
+        const mapSize = window.game ? window.game.mapSize : 2000;
         
         if (this.x < 0) this.x = 0;
         if (this.x > mapSize) this.x = mapSize;
@@ -647,6 +673,14 @@ class Fish {
         this.isEatBoosted = true;
         this.eatBoostTime = this.eatBoostDuration;
         console.log('吃鱼加速激活！');
+    }
+
+    // 激活技能加速效果
+    activateSpeedBoost(duration, multiplier) {
+        this.isSpeedBoosted = true;
+        this.speedBoostTime = duration || this.speedBoostDuration;
+        this.speedBoostMultiplier = multiplier || this.speedBoostMultiplier;
+        console.log('技能加速激活！');
     }
 
     // 获取鱼的信息

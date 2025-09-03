@@ -136,6 +136,10 @@ class MapSystem {
         const targetMapIndex = this.maps.findIndex(map => map.id === mapId);
         if (targetMapIndex === -1) return false;
 
+        // 防止重复传送
+        if (game.isTeleporting) return false;
+        game.isTeleporting = true;
+
         // 保存玩家当前的移动速度
         const currentVx = game.player.vx;
         const currentVy = game.player.vy;
@@ -151,6 +155,18 @@ class MapSystem {
         // 移动玩家到新位置
         game.player.x = x;
         game.player.y = y;
+
+        // 立即更新摄像头位置，避免视觉跳跃
+        game.camera.x = x - game.canvas.width / 2;
+        game.camera.y = y - game.canvas.height / 2;
+        game.camera.targetX = game.camera.x;
+        game.camera.targetY = game.camera.y;
+        
+        // 限制摄像头在地图边界内
+        game.camera.x = Math.max(0, Math.min(game.camera.x, newMap.size - game.canvas.width));
+        game.camera.y = Math.max(0, Math.min(game.camera.y, newMap.size - game.canvas.height));
+        game.camera.targetX = game.camera.x;
+        game.camera.targetY = game.camera.y;
 
         // 恢复玩家的移动速度（保持传送前的速度）
         game.player.vx = currentVx;
@@ -176,6 +192,11 @@ class MapSystem {
         if (game.particleSystem) {
             game.particleSystem.createExplosion(x, y, '#9966FF');
         }
+
+        // 重置传送状态（延迟重置，防止立即再次传送）
+        setTimeout(() => {
+            game.isTeleporting = false;
+        }, 500); // 0.5秒冷却时间，减少等待时间
 
         console.log(`传送到地图 ${mapId}: ${newMap.name}`);
         return true;
@@ -306,7 +327,8 @@ class MapSystem {
             ctx.moveTo(0, y);
             
             for (let x = 0; x <= canvas.width; x += 20) {
-                const waveY = y + Math.sin((x + gameTime * 50) * 0.01) * 10;
+                // 使用确定性的正弦波，避免随机数导致的闪烁
+                const waveY = y + Math.sin((x + gameTime * 50) * 0.01 + i * 0.5) * 10;
                 ctx.lineTo(x, waveY);
             }
             ctx.stroke();
@@ -361,14 +383,15 @@ class MapSystem {
         ctx.strokeStyle = '#228B22';
         ctx.lineWidth = 2;
         
-        // 绘制海草
+        // 绘制海草 - 使用确定性的波浪效果避免闪烁
         for (let i = 0; i < 3; i++) {
             const x = (i - 1) * decoration.width / 4;
             ctx.beginPath();
             ctx.moveTo(x, 0);
             
             for (let y = 0; y <= decoration.height; y += 10) {
-                const waveX = x + Math.sin(y * 0.1) * 10;
+                // 使用装饰品位置创建确定性的波浪
+                const waveX = x + Math.sin(y * 0.1 + decoration.x * 0.01 + i) * 10;
                 ctx.lineTo(waveX, -y);
             }
             ctx.stroke();
@@ -433,11 +456,13 @@ class MapSystem {
         ctx.strokeStyle = '#1C1C1C';
         ctx.lineWidth = 4;
         
-        // 绘制不规则岩石
+        // 绘制不规则岩石 - 使用确定性的形状避免闪烁
         ctx.beginPath();
         for (let i = 0; i < 8; i++) {
             const angle = (i / 8) * Math.PI * 2;
-            const radius = decoration.radius * (0.8 + Math.random() * 0.4);
+            // 使用装饰品位置创建确定性的半径变化
+            const radiusVariation = 0.8 + Math.sin(decoration.x * 0.01 + i) * 0.2;
+            const radius = decoration.radius * radiusVariation;
             const x = Math.cos(angle) * radius;
             const y = Math.sin(angle) * radius;
             
@@ -459,11 +484,12 @@ class MapSystem {
         ctx.fill();
         ctx.stroke();
         
-        // 绘制火花效果
+        // 绘制火花效果 - 使用确定性的动画避免闪烁
         ctx.fillStyle = '#FFD700';
         for (let i = 0; i < 5; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const distance = decoration.radius + Math.random() * 20;
+            // 使用装饰品的位置和索引创建确定性的火花位置
+            const angle = (decoration.x + decoration.y + i) * 0.1;
+            const distance = decoration.radius + 15 + (i * 3);
             const x = Math.cos(angle) * distance;
             const y = Math.sin(angle) * distance;
             

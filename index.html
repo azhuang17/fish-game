@@ -20,7 +20,7 @@
                 <li>使用方向键或WASD控制小鱼移动</li>
                 <li>吃掉比自己小的鱼来成长</li>
                 <li>避开比自己大的鱼和炸弹</li>
-                <li>按空格键使用眩晕技能</li>
+                <li>按空格键使用技能，按1/2/3切换技能（眩晕/加速/石墙）</li>
                 <li>通过传送门探索不同地图</li>
             </ul>
         </div>
@@ -40,9 +40,15 @@
                     </div>
                 </div>
                 <div class="skill-indicator">
-                    <span>技能: </span>
+                    <div id="skillName" class="skill-name">STUN: 眩晕龙卷风</div>
                     <div id="skillCooldown" class="skill-cooldown">
                         <div id="skillProgress" class="skill-progress"></div>
+                    </div>
+                    <div id="skillDescription" class="skill-desc">释放龙卷风，眩晕周围的鱼</div>
+                    <div id="skillKeys" class="skill-keys">
+                        <div class="skill-key active">1: 眩晕</div>
+                        <div class="skill-key">2: 加速</div>
+                        <div class="skill-key">3: 石墙</div>
                     </div>
                 </div>
             </div>
@@ -50,6 +56,14 @@
                 <div class="map-indicator">
                     <span id="currentMap">地图 1</span>
                 </div>
+            </div>
+            
+            <!-- 移动端技能按钮 -->
+            <div id="mobileControls" class="mobile-controls">
+                <button id="skillButton" class="skill-button" type="button">
+                    <span class="skill-icon">⚡</span>
+                    <span class="skill-text">眩晕</span>
+                </button>
             </div>
         </div>
     </div>
