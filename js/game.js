@@ -10,6 +10,7 @@ class Game {
         // 游戏状态
         this.gameState = 'start'; // 'start', 'playing', 'end'
         this.isTeleporting = false; // 添加传送状态管理
+        this.lastTeleportTime = 0; // 添加传送时间保护
         
         // 游戏对象
         this.player = null;
@@ -172,6 +173,26 @@ class Game {
                 }
             });
         }
+
+        // 移动端技能选择器
+        const skillSelectBtns = document.querySelectorAll('.skill-select-btn');
+        skillSelectBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const skillType = btn.dataset.skill;
+                this.currentSkill = skillType;
+                this.updateSkillSelector();
+                this.updateSkillUI();
+            });
+
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const skillType = btn.dataset.skill;
+                this.currentSkill = skillType;
+                this.updateSkillSelector();
+                this.updateSkillUI();
+            });
+        });
     }
 
     startGame() {
@@ -217,6 +238,7 @@ class Game {
         this.skillCooldowns = { stun: 0, speed: 0, wall: 0 };
         this.skillSystem.clearWalls(); // 清理所有石墙
         this.updateSizeUI();
+        this.updateSkillSelector(); // 更新技能选择器状态
         this.updateSkillUI();
         this.updateMapUI();
     }
@@ -461,6 +483,9 @@ class Game {
     checkPortalCollisions() {
         if (!this.player || !this.player.isAlive || this.isTeleporting) return;
         
+        // 额外保护：传送后2秒内无法再次传送
+        if (this.lastTeleportTime && Date.now() - this.lastTeleportTime < 2000) return;
+        
         const portal = this.mapSystem.checkPortalCollision(this.player);
         if (portal) {
             // 传送到目标地图
@@ -591,6 +616,18 @@ class Game {
         }
     }
 
+    updateSkillSelector() {
+        // 更新移动端技能选择器的活跃状态
+        const skillSelectBtns = document.querySelectorAll('.skill-select-btn');
+        skillSelectBtns.forEach(btn => {
+            if (btn.dataset.skill === this.currentSkill) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
     updateSkillUI() {
         // 更新当前技能的冷却进度
         const skill = this.skillSystem.getSkill(this.currentSkill);
@@ -619,14 +656,32 @@ class Game {
         // 更新移动端技能按钮状态
         const skillButton = document.getElementById('skillButton');
         if (skillButton) {
+            const skillIcon = skillButton.querySelector('.skill-icon');
+            const skillText = skillButton.querySelector('.skill-text');
+            const cooldownOverlay = skillButton.querySelector('.skill-cooldown-overlay');
+            
+            // 设置技能图标和文本
+            const skillIcons = { stun: '🌪️', speed: '⚡', wall: '🧱' };
+            if (skillIcon) skillIcon.textContent = skillIcons[this.currentSkill] || '⚡';
+            if (skillText) skillText.textContent = skill.name;
+            
+            // 设置冷却状态
             if (cooldownTime > 0) {
                 skillButton.classList.add('cooldown', 'disabled');
                 skillButton.disabled = true;
-                skillButton.textContent = `${skill.name} (${cooldownTime.toFixed(1)}s)`;
+                if (skillText) skillText.textContent = `${skill.name} (${cooldownTime.toFixed(1)}s)`;
+                
+                // 冷却进度动画
+                if (cooldownOverlay) {
+                    const progress = (skill.cooldown - cooldownTime) / skill.cooldown;
+                    cooldownOverlay.style.transform = `translateY(${(1 - progress) * 100}%)`;
+                }
             } else {
                 skillButton.classList.remove('cooldown', 'disabled');
                 skillButton.disabled = false;
-                skillButton.textContent = skill.name;
+                if (cooldownOverlay) {
+                    cooldownOverlay.style.transform = 'translateY(100%)';
+                }
             }
         }
 

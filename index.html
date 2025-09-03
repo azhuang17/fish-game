@@ -58,11 +58,17 @@
                 </div>
             </div>
             
-            <!-- 移动端技能按钮 -->
-            <div id="mobileControls" class="mobile-controls">
-                <button id="skillButton" class="skill-button" type="button">
+            <!-- 移动端技能控制 -->
+            <div id="mobileSkills" class="mobile-skills">
+                <div class="skill-selector">
+                    <button id="stunSkillBtn" class="skill-select-btn active" data-skill="stun">眩晕</button>
+                    <button id="speedSkillBtn" class="skill-select-btn" data-skill="speed">加速</button>
+                    <button id="wallSkillBtn" class="skill-select-btn" data-skill="wall">石墙</button>
+                </div>
+                <button id="skillButton" class="skill-button">
                     <span class="skill-icon">⚡</span>
-                    <span class="skill-text">眩晕</span>
+                    <span class="skill-text">眩晕龙卷风</span>
+                    <div class="skill-cooldown-overlay"></div>
                 </button>
             </div>
         </div>

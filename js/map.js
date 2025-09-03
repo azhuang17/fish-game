@@ -65,48 +65,48 @@ class MapSystem {
     }
 
     initializePortals() {
-        // 地图1到地图2的传送门
+        // 地图1到地图2的传送门 - 远离边缘
         this.portals.push({
             fromMap: 1,
             toMap: 2,
-            x: 1800,
-            y: 1800,
+            x: 1600, // 从1800移动到更安全的位置
+            y: 1600, // 从1800移动到更安全的位置
             radius: 60,
-            toX: 200,
-            toY: 200
-        });
-
-        // 地图2到地图1的传送门
-        this.portals.push({
-            fromMap: 2,
-            toMap: 1,
-            x: 200,
-            y: 200,
-            radius: 60,
-            toX: 1800,
-            toY: 1800
-        });
-
-        // 地图2到地图3的传送门
-        this.portals.push({
-            fromMap: 2,
-            toMap: 3,
-            x: 2200,
-            y: 2200,
-            radius: 60,
-            toX: 300,
+            toX: 300, // 传送到更安全的位置
             toY: 300
         });
 
-        // 地图3到地图2的传送门
+        // 地图2到地图1的传送门 - 远离边缘
+        this.portals.push({
+            fromMap: 2,
+            toMap: 1,
+            x: 300, // 保持在安全位置
+            y: 300,
+            radius: 60,
+            toX: 1600, // 对应调整
+            toY: 1600
+        });
+
+        // 地图2到地图3的传送门 - 远离边缘
+        this.portals.push({
+            fromMap: 2,
+            toMap: 3,
+            x: 2000, // 从2200移动到更安全的位置
+            y: 2000, // 从2200移动到更安全的位置
+            radius: 60,
+            toX: 400, // 传送到更安全的位置
+            toY: 400
+        });
+
+        // 地图3到地图2的传送门 - 远离边缘
         this.portals.push({
             fromMap: 3,
             toMap: 2,
-            x: 300,
-            y: 300,
+            x: 400, // 从300移动到更安全的位置
+            y: 400, // 从300移动到更安全的位置
             radius: 60,
-            toX: 2200,
-            toY: 2200
+            toX: 2000, // 对应调整
+            toY: 2000
         });
     }
 
@@ -196,7 +196,10 @@ class MapSystem {
         // 重置传送状态（延迟重置，防止立即再次传送）
         setTimeout(() => {
             game.isTeleporting = false;
-        }, 500); // 0.5秒冷却时间，减少等待时间
+        }, 1000); // 增加到1秒冷却时间，确保稳定
+
+        // 额外保护：传送后短暂内无法再次传送
+        game.lastTeleportTime = Date.now();
 
         console.log(`传送到地图 ${mapId}: ${newMap.name}`);
         return true;
