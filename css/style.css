@@ -470,10 +470,61 @@ body {
     }
 }
 
+/* 虚拟方向盘 */
+.virtual-joystick {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    width: 120px;
+    height: 120px;
+    z-index: 1000;
+    display: none; /* 默认隐藏，只在移动端显示 */
+    pointer-events: auto;
+}
+
+.joystick-base {
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.joystick-handle {
+    width: 50px;
+    height: 50px;
+    background: radial-gradient(circle, #00d4ff 0%, #0099cc 100%);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.1s ease;
+    box-shadow: 0 2px 8px rgba(0, 212, 255, 0.4);
+    cursor: grab;
+}
+
+.joystick-handle:active {
+    cursor: grabbing;
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.joystick-handle.dragging {
+    transition: none;
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
 /* 移动端显示技能控制 */
 @media (max-width: 768px) {
     .mobile-skills {
         display: flex !important;
+    }
+    
+    .virtual-joystick {
+        display: block !important;
     }
 }
 

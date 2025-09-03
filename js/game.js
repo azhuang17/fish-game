@@ -39,6 +39,17 @@ class Game {
         this.keys = {};
         this.mousePos = { x: 0, y: 0 };
         
+        // 虚拟方向盘
+        this.joystick = {
+            active: false,
+            startX: 0,
+            startY: 0,
+            currentX: 0,
+            currentY: 0,
+            directionX: 0,
+            directionY: 0
+        };
+        
         // 地图系统
         this.currentMap = 1;
         this.mapSize = 2000;
@@ -222,6 +233,9 @@ class Game {
                 e.stopPropagation();
             });
         });
+
+        // 虚拟方向盘
+        this.setupVirtualJoystick();
     }
 
     startGame() {
@@ -392,8 +406,13 @@ class Game {
         if (this.keys['KeyA'] || this.keys['ArrowLeft']) moveX -= 1;
         if (this.keys['KeyD'] || this.keys['ArrowRight']) moveX += 1;
         
-        // 鼠标控制（可选）
-        if (moveX === 0 && moveY === 0) {
+        // 虚拟方向盘控制（优先级高于鼠标）
+        if (this.joystick.active) {
+            moveX = this.joystick.directionX;
+            moveY = this.joystick.directionY;
+        }
+        // 鼠标控制（可选，只在键盘和方向盘都未使用时生效）
+        else if (moveX === 0 && moveY === 0) {
             const playerScreenPos = worldToScreen(this.player.x, this.player.y, this.camera);
             const dx = this.mousePos.x - playerScreenPos.x;
             const dy = this.mousePos.y - playerScreenPos.y;
@@ -836,6 +855,113 @@ class Game {
         this.ctx.stroke();
         
         this.ctx.setLineDash([]);
+    }
+
+    setupVirtualJoystick() {
+        const joystickElement = document.getElementById('virtualJoystick');
+        const handleElement = document.getElementById('joystickHandle');
+        
+        if (!joystickElement || !handleElement) return;
+
+        let isDragging = false;
+        const joystickRadius = 60; // 方向盘半径
+        const handleRadius = 25;   // 手柄半径
+
+        // 触摸开始
+        const startDrag = (clientX, clientY) => {
+            isDragging = true;
+            const rect = joystickElement.getBoundingClientRect();
+            this.joystick.startX = rect.left + rect.width / 2;
+            this.joystick.startY = rect.top + rect.height / 2;
+            this.joystick.currentX = clientX;
+            this.joystick.currentY = clientY;
+            this.joystick.active = true;
+            
+            handleElement.classList.add('dragging');
+            this.updateJoystickHandle();
+        };
+
+        // 触摸移动
+        const updateDrag = (clientX, clientY) => {
+            if (!isDragging) return;
+
+            this.joystick.currentX = clientX;
+            this.joystick.currentY = clientY;
+            this.updateJoystickHandle();
+        };
+
+        // 触摸结束
+        const endDrag = () => {
+            isDragging = false;
+            this.joystick.active = false;
+            this.joystick.directionX = 0;
+            this.joystick.directionY = 0;
+            
+            handleElement.classList.remove('dragging');
+            
+            // 重置手柄位置
+            handleElement.style.transform = 'translate(-50%, -50%)';
+        };
+
+        // 鼠标事件
+        handleElement.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            startDrag(e.clientX, e.clientY);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            updateDrag(e.clientX, e.clientY);
+        });
+
+        document.addEventListener('mouseup', endDrag);
+
+        // 触摸事件
+        handleElement.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            startDrag(touch.clientX, touch.clientY);
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                updateDrag(touch.clientX, touch.clientY);
+            }
+        });
+
+        document.addEventListener('touchend', (e) => {
+            if (isDragging) {
+                e.preventDefault();
+                endDrag();
+            }
+        });
+    }
+
+    updateJoystickHandle() {
+        const handleElement = document.getElementById('joystickHandle');
+        if (!handleElement || !this.joystick.active) return;
+
+        const dx = this.joystick.currentX - this.joystick.startX;
+        const dy = this.joystick.currentY - this.joystick.startY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const maxDistance = 35; // 最大移动距离
+
+        // 限制在圆形范围内
+        let finalX = dx;
+        let finalY = dy;
+        
+        if (distance > maxDistance) {
+            finalX = (dx / distance) * maxDistance;
+            finalY = (dy / distance) * maxDistance;
+        }
+
+        // 计算方向值 (-1 到 1)
+        this.joystick.directionX = finalX / maxDistance;
+        this.joystick.directionY = finalY / maxDistance;
+
+        // 更新手柄位置
+        handleElement.style.transform = `translate(${finalX - 25}px, ${finalY - 25}px)`;
     }
 }
 
