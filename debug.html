@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动端UI调试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: white;
+        }
+        
+        .info {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .mobile-preview {
+            width: 375px;
+            height: 667px;
+            background: #16213e;
+            margin: 0 auto;
+            position: relative;
+            border: 3px solid #333;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        
+        .preview-ui-top {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .preview-size-indicator {
+            align-self: center;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 6px 10px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        
+        .preview-size-bar {
+            width: 100px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            margin-left: 5px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
+        .preview-size-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            border-radius: 5px;
+            width: 30%;
+        }
+        
+        .preview-ui-bottom {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .preview-map-indicator {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 8px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 12px;
+        }
+        
+        .preview-mobile-skills {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .preview-skill-selector {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .preview-skill-btn {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: 2px solid #555;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            min-width: 50px;
+        }
+        
+        .preview-skill-btn.active {
+            background: rgba(0, 150, 255, 0.8);
+            border-color: #0096ff;
+        }
+        
+        .preview-skill-button {
+            background: rgba(255, 100, 0, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            align-self: center;
+            font-size: 12px;
+        }
+        
+        .screen-content {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            right: 20px;
+            bottom: 130px;
+            background: rgba(0, 100, 200, 0.1);
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h2>移动端UI布局预览</h2>
+        <p><strong>屏幕宽度:</strong> <span id="width"></span>px</p>
+        <p><strong>移动设备:</strong> <span id="mobile"></span></p>
+        <p><strong>修复内容:</strong></p>
+        <ul>
+            <li>✅ 隐藏顶部技能指示器，避免挡住屏幕</li>
+            <li>✅ 保留体型进度条，移至屏幕中央顶部</li>
+            <li>✅ 调整地图指示器位置，避免与控件冲突</li>
+            <li>✅ 优化移动端控件样式和响应</li>
+        </ul>
+    </div>
+    
+    <div class="mobile-preview">
+        <div class="preview-ui-top">
+            <div class="preview-size-indicator">
+                体型: 
+                <div class="preview-size-bar">
+                    <div class="preview-size-progress"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="screen-content">
+            游戏画面区域<br/>
+            (现在没有被UI挡住)
+        </div>
+        
+        <div class="preview-ui-bottom">
+            <div class="preview-map-indicator">地图 1</div>
+        </div>
+        
+        <div class="preview-mobile-skills">
+            <div class="preview-skill-selector">
+                <div class="preview-skill-btn active">眩晕</div>
+                <div class="preview-skill-btn">加速</div>
+                <div class="preview-skill-btn">石墙</div>
+            </div>
+            <div class="preview-skill-button">
+                <div>🌪️</div>
+                <div>眩晕</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="info" style="margin-top: 20px;">
+        <p><strong>说明:</strong> 现在手机端只显示必要的UI元素，游戏画面不再被顶部技能栏遮挡。</p>
+        <p><a href="index.html" style="color: #0096ff;">返回游戏</a></p>
+    </div>
+
+    <script>
+        function updateInfo() {
+            document.getElementById('width').textContent = window.innerWidth;
+            document.getElementById('mobile').textContent = 
+                (window.innerWidth <= 768 || 'ontouchstart' in window) ? '是' : '否';
+        }
+        
+        updateInfo();
+        window.addEventListener('resize', updateInfo);
+    </script>
+</body>
+</html> 

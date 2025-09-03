@@ -86,6 +86,11 @@ class Game {
     resizeCanvas() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+        
+        // 重新检测移动端控件显示
+        if (this.gameState === 'playing') {
+            this.showMobileControls();
+        }
     }
 
     setupInput() {
@@ -160,37 +165,61 @@ class Game {
             // 点击事件
             skillButton.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
+                console.log('技能按钮点击，游戏状态:', this.gameState);
                 if (this.gameState === 'playing') {
+                    console.log('释放技能:', this.currentSkill);
                     this.useSkill();
                 }
             });
 
-            // 触摸事件（防止双重触发）
+            // 触摸事件
             skillButton.addEventListener('touchstart', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
+                console.log('技能按钮触摸，游戏状态:', this.gameState);
                 if (this.gameState === 'playing') {
+                    console.log('释放技能:', this.currentSkill);
                     this.useSkill();
                 }
+            });
+
+            // 触摸结束事件
+            skillButton.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
             });
         }
 
         // 移动端技能选择器
         const skillSelectBtns = document.querySelectorAll('.skill-select-btn');
         skillSelectBtns.forEach(btn => {
+            // 点击事件
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
+                console.log('技能选择器点击:', btn.dataset.skill);
                 const skillType = btn.dataset.skill;
                 this.currentSkill = skillType;
                 this.updateSkillSelector();
                 this.updateSkillUI();
             });
 
+            // 触摸事件
             btn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
+                console.log('技能选择器触摸:', btn.dataset.skill);
                 const skillType = btn.dataset.skill;
                 this.currentSkill = skillType;
                 this.updateSkillSelector();
                 this.updateSkillUI();
+            });
+
+            // 触摸结束事件
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
             });
         });
     }
@@ -198,6 +227,9 @@ class Game {
     startGame() {
         this.gameState = 'playing';
         this.showScreen('gameScreen');
+        
+        // 确保移动端控件显示
+        this.showMobileControls();
         
         // 初始化游戏对象
         this.initGameObjects();
@@ -603,6 +635,22 @@ class Game {
             screen.classList.add('hidden');
         });
         document.getElementById(screenId).classList.remove('hidden');
+    }
+
+    showMobileControls() {
+        // 检测是否为移动设备或小屏幕
+        const isMobile = window.innerWidth <= 768 || 'ontouchstart' in window;
+        const mobileSkills = document.getElementById('mobileSkills');
+        
+        if (mobileSkills) {
+            if (isMobile) {
+                mobileSkills.style.display = 'flex';
+                console.log('显示移动端技能控制');
+            } else {
+                mobileSkills.style.display = 'none';
+                console.log('隐藏移动端技能控制');
+            }
+        }
     }
 
     // UI更新方法

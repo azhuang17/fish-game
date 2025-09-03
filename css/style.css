@@ -363,12 +363,14 @@ body {
     flex-direction: column;
     gap: 10px;
     z-index: 1000;
+    pointer-events: auto; /* 确保可以接收点击事件 */
 }
 
 .skill-selector {
     display: flex;
     gap: 5px;
     flex-direction: row;
+    pointer-events: auto; /* 确保按钮可以点击 */
 }
 
 .skill-select-btn {
@@ -381,6 +383,9 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     min-width: 50px;
+    pointer-events: auto; /* 确保按钮可以点击 */
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .skill-select-btn.active {
@@ -412,6 +417,9 @@ body {
     align-items: center;
     justify-content: center;
     align-self: center;
+    pointer-events: auto; /* 确保按钮可以点击 */
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .skill-button:hover {
@@ -456,9 +464,16 @@ body {
 }
 
 /* 桌面端隐藏移动端控件 */
-@media (min-width: 768px) {
+@media (min-width: 769px) {
     .mobile-skills {
         display: none;
+    }
+}
+
+/* 移动端显示技能控制 */
+@media (max-width: 768px) {
+    .mobile-skills {
+        display: flex !important;
     }
 }
 
@@ -468,17 +483,55 @@ body {
     }
     
     .ui-top {
+        top: 10px;
+        left: 10px;
+        right: 10px;
         flex-direction: column;
-        gap: 10px;
+        gap: 5px;
+    }
+    
+    .skill-indicator {
+        display: none !important;
+    }
+    
+    .size-indicator {
+        align-self: center;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 6px 10px;
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        font-size: 12px;
+        white-space: nowrap;
+    }
+    
+    .size-indicator span {
+        margin-right: 5px;
     }
     
     .size-bar, .skill-cooldown {
-        width: 120px;
+        width: 100px;
+        height: 6px;
     }
     
     .instructions {
         max-width: 90%;
         font-size: 0.9rem;
+    }
+    
+    /* 调整底部UI位置，避免与移动控件冲突 */
+    .ui-bottom {
+        bottom: 120px;
+        left: 50%;
+        transform: translateX(-50%);
+        right: auto;
+    }
+    
+    .map-indicator {
+        background: rgba(0, 0, 0, 0.6);
+        padding: 4px 8px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        font-size: 12px;
     }
     
     /* 在移动端显示技能按钮 */
